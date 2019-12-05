@@ -320,10 +320,15 @@ class BaseModel(metaclass=ModelMetaclass):
         get_key = self._get_key_factory(by_alias)
         get_key = partial(get_key, self.__fields__)
 
-        allowed_keys = self._calculate_keys(include=include, exclude=exclude, exclude_unset=exclude_unset)
+        if getattr(self.Config, 'validate_on_export', False):
+            target = self.__class__(**self.__dict__)  # creates a copy, validates it and uses it
+        else:
+            target = self
+
+        allowed_keys = target._calculate_keys(include=include, exclude=exclude, exclude_unset=exclude_unset)
         return {
             get_key(k): v
-            for k, v in self._iter(
+            for k, v in target._iter(
                 to_dict=True,
                 by_alias=by_alias,
                 allowed_keys=allowed_keys,
