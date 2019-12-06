@@ -303,24 +303,18 @@ class BaseModel(metaclass=ModelMetaclass):
         include: Union['AbstractSetIntStr', 'DictIntStrAny'] = None,
         exclude: Union['AbstractSetIntStr', 'DictIntStrAny'] = None,
         by_alias: bool = False,
-        skip_defaults: bool = None,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
+        validate_on_export: bool = False,
     ) -> 'DictStrAny':
         """
         Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.
         """
-        if skip_defaults is not None:
-            warnings.warn(
-                f'{self.__class__.__name__}.dict(): "skip_defaults" is deprecated and replaced by "exclude_unset"',
-                DeprecationWarning,
-            )
-            exclude_unset = skip_defaults
         get_key = self._get_key_factory(by_alias)
         get_key = partial(get_key, self.__fields__)
 
-        if getattr(self.Config, 'validate_on_export', False):
+        if validate_on_export:
             target = self.__class__(**self.__dict__)  # creates a copy, validates it and uses it
         else:
             target = self
@@ -337,6 +331,7 @@ class BaseModel(metaclass=ModelMetaclass):
                 exclude_unset=exclude_unset,
                 exclude_defaults=exclude_defaults,
                 exclude_none=exclude_none,
+                validate_on_export=validate_on_export,
             )
         }
 
@@ -558,6 +553,7 @@ class BaseModel(metaclass=ModelMetaclass):
         exclude_unset: bool,
         exclude_defaults: bool,
         exclude_none: bool,
+        validate_on_export: bool = False,
     ) -> Any:
 
         if isinstance(v, BaseModel):
@@ -569,6 +565,7 @@ class BaseModel(metaclass=ModelMetaclass):
                     include=include,
                     exclude=exclude,
                     exclude_none=exclude_none,
+                    validate_on_export=validate_on_export,
                 )
             else:
                 return v.copy(include=include, exclude=exclude)
@@ -587,6 +584,7 @@ class BaseModel(metaclass=ModelMetaclass):
                     include=value_include and value_include.for_element(k_),
                     exclude=value_exclude and value_exclude.for_element(k_),
                     exclude_none=exclude_none,
+                    validate_on_export=validate_on_export,
                 )
                 for k_, v_ in v.items()
                 if (not value_exclude or not value_exclude.is_excluded(k_))
@@ -604,6 +602,7 @@ class BaseModel(metaclass=ModelMetaclass):
                     include=value_include and value_include.for_element(i),
                     exclude=value_exclude and value_exclude.for_element(i),
                     exclude_none=exclude_none,
+                    validate_on_export=validate_on_export,
                 )
                 for i, v_ in enumerate(v)
                 if (not value_exclude or not value_exclude.is_excluded(i))
@@ -639,6 +638,7 @@ class BaseModel(metaclass=ModelMetaclass):
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
         exclude_none: bool = False,
+        validate_on_export: bool = False,
     ) -> 'TupleGenerator':
 
         value_exclude = ValueItems(self, exclude) if exclude else None
@@ -662,6 +662,7 @@ class BaseModel(metaclass=ModelMetaclass):
                     exclude_unset=exclude_unset,
                     exclude_defaults=exclude_defaults,
                     exclude_none=exclude_none,
+                    validate_on_export=validate_on_export,
                 )
                 if not (exclude_none and value is None):
                     yield k, value
